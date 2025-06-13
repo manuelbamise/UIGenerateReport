@@ -12,59 +12,48 @@ interface ExcelData {
 }
 
 const Index = () => {
+  const [selectedFile, setSelectedFile] = useState<File | null>(null);
   const [excelData, setExcelData] = useState<ExcelData | null>(null);
   const [loading, setLoading] = useState(false);
   const { toast } = useToast();
 
-  const handleFileUpload = async (file: File) => {
+  const handleFileChange = (e: React.ChangeEvent<HTMLInputElement>) => {
+    const file = e.target.files?.[0];
+    if (file) {
+      setSelectedFile(file);
+    }
+  };
+
+
+  const handleFileUpload = async () => {
+    if (!selectedFile) return;
     setLoading(true);
-    
+
     try {
-      // Mock API call - replace with your actual backend endpoint
+
       const formData = new FormData();
-      formData.append('file', file);
-      
-      // Simulating API call with mock data
-      await new Promise(resolve => setTimeout(resolve, 2000));
-      
-      // Mock response - replace this with actual fetch call
-      const mockResponse: ExcelData = {
-        sheetName: "Tolulope Oyewole",
-        numOfSheets: 15,
-        data: [
-          {
-            "CASE_Number/ Student ID": 20030917,
-            "Assigned Date": 45783,
-            "Agent": "Tolulope",
-            "Status": "Task Completed",
-            "Queue or Spreadsheet": "Spreadsheet",
-            "Link To Spreadsheet": "https://example.com/sheet1"
-          },
-          {
-            "CASE_Number/ Student ID": 20030918,
-            "Assigned Date": 45784,
-            "Agent": "John Doe",
-            "Status": "In Progress",
-            "Queue or Spreadsheet": "Queue",
-            "Link To Spreadsheet": "https://example.com/sheet2"
-          },
-          {
-            "CASE_Number/ Student ID": 20030919,
-            "Assigned Date": 45785,
-            "Agent": "Jane Smith",
-            "Status": "Pending Review",
-            "Queue or Spreadsheet": "Spreadsheet",
-            "Link To Spreadsheet": "https://example.com/sheet3"
-          }
-        ]
-      };
-      
-      setExcelData(mockResponse);
+      formData.append('file', selectedFile);
+
+
+
+      const response = await fetch('http://localhost:3000/api/upload', {
+        method: 'POST',
+        body: formData,
+      });
+
+      if (!response.ok) {
+        throw new Error('Failed to upload file');
+      }
+
+      const data = await response.json(); // this is your JSON structure
+      setExcelData(data);
+      console.log('Received JSON:', data);
+
       toast({
         title: "Success!",
-        description: `Successfully loaded ${mockResponse.data.length} rows from ${file.name}`,
+        description: `Successfully loaded ${data.length} rows from ${selectedFile.name}`,
       });
-      
+
     } catch (error) {
       console.error('Error uploading file:', error);
       toast({
@@ -106,7 +95,7 @@ const Index = () => {
                 Upload Your Excel File
               </h2>
               <p className="text-lg text-gray-600 dark:text-gray-400 max-w-2xl mx-auto">
-                Transform your Excel data into an interactive, sortable, and filterable table. 
+                Transform your Excel data into an interactive, sortable, and filterable table.
                 Simply upload your .xlsx or .xls file to get started.
               </p>
             </div>
