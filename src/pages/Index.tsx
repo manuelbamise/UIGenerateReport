@@ -1,4 +1,5 @@
 
+import { Card } from '@/components/ui/card';
 import React, { useState } from 'react';
 import { ThemeToggle } from '../components/ThemeToggle';
 import { FileUpload } from '../components/FileUpload';
@@ -8,44 +9,65 @@ import { useToast } from '../hooks/use-toast';
 interface ExcelData {
   sheetName: string;
   numOfSheets: number;
-  data: Record<string, any>[];
+  data?: any[];
 }
 
 const Index = () => {
+  // const [selectedFile, setSelectedFile] = useState(null);
   const [excelData, setExcelData] = useState<ExcelData | null>(null);
   const [loading, setLoading] = useState(false);
   const { toast } = useToast();
 
   const handleFileUpload = async (file: File) => {
+
+
+    // Called on file select
+    if (!file) {
+      toast({
+        title: "Upload a file first",
+        description: "you have to upload a file before you continue",
+        variant: "destructive"
+      })
+
+      return;
+    }
+
+    // setSelectedFile(file);
+    setExcelData(null); // Clear previous data
+    console.log(file.name)
+
+    const formData = new FormData();
+    formData.append('file', file);
+
     setLoading(true);
 
     try {
-      const formData = new FormData();
-      formData.append('file', file);
-
-      // Replace with your actual API endpoint
-      const response = await fetch('http://localhost:3000/api/upload', {
+      const response = await fetch('http://localhost:5600/upload', {
         method: 'POST',
         body: formData,
       });
 
       if (!response.ok) {
-        throw new Error('Failed to upload file');
+        throw new Error('Upload failed');
       }
 
-      const data = await response.json();
-      setExcelData(data);
-      console.log('Received JSON:', data);
+      const responseJson = await response.json();
+      if (!responseJson) {
+        throw new Error('Error getting a response')
+      }
+      setExcelData(responseJson)
+
+      console.log('json Data:', responseJson);
 
       toast({
         title: "Success!",
-        description: `Successfully loaded ${data.data?.length || 0} rows from ${file.name}`,
+        description: `Successfully loaded ${responseJson.data?.length || 0} rows from ${file.name}`,
       });
 
     } catch (error) {
       console.error('Error uploading file:', error);
       toast({
-        title: "Error",
+        title: `${error.message}`,
         description: "Failed to process the file. Please try again.",
         variant: "destructive",
       });
@@ -109,6 +131,27 @@ const Index = () => {
                   </button>
                 </div>
               </div>
+              {/* Header */}
+              <Card className="p-6 bg-gradient-to-r from-blue-50 to-purple-50 dark:from-blue-950/20 dark:to-purple-950/20 border-blue-200 dark:border-blue-800">
+                <div className="flex items-center justify-between">
+                  <div>
+                    <h2 className="text-2xl font-bold text-gray-900 dark:text-gray-100">
+                      {excelData.sheetName}
+                    </h2>
+                    <p className="text-sm text-gray-600 dark:text-gray-400 mt-1">
+                      Sheet 1 of {excelData.numOfSheets} • {excelData.data.length} rows
+                    </p>
+                  </div>
+                  <div className="text-right">
+                    <div className="text-3xl font-bold text-blue-600 dark:text-blue-400">
+                      {excelData.data.length}
+                    </div>
+                    <div className="text-sm text-gray-500 dark:text-gray-400">Records</div>
+                  </div>
+                </div>
+              </Card>
+
+
               <DataTable excelData={excelData} />
             </div>
           )}

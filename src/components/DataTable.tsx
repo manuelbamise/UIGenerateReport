@@ -33,20 +33,20 @@ export const DataTable: React.FC<DataTableProps> = ({ excelData }) => {
 
   const columns = useMemo(() => {
     if (!excelData.data || excelData.data.length === 0) return [];
-    
+
     const firstRow = excelData.data[0];
     return Object.keys(firstRow).map((key) =>
       columnHelper.accessor(key, {
         header: key,
         cell: (info) => {
           const value = info.getValue();
-          
+
           // Handle links
           if (typeof value === 'string' && value.startsWith('http')) {
             return (
-              <a 
-                href={value} 
-                target="_blank" 
+              <a
+                href={value}
+                target="_blank"
                 rel="noopener noreferrer"
                 className="text-blue-600 dark:text-blue-400 hover:underline"
               >
@@ -54,14 +54,14 @@ export const DataTable: React.FC<DataTableProps> = ({ excelData }) => {
               </a>
             );
           }
-          
+
           // Handle dates (Excel serial dates)
           if (typeof value === 'number' && key.toLowerCase().includes('date')) {
             const excelEpoch = new Date(1900, 0, 1);
             const jsDate = new Date(excelEpoch.getTime() + (value - 2) * 24 * 60 * 60 * 1000);
             return jsDate.toLocaleDateString();
           }
-          
+
           return value?.toString() || '';
         },
       })
@@ -94,25 +94,6 @@ export const DataTable: React.FC<DataTableProps> = ({ excelData }) => {
 
   return (
     <div className="space-y-6 animate-fade-in">
-      {/* Header */}
-      <Card className="p-6 bg-gradient-to-r from-blue-50 to-purple-50 dark:from-blue-950/20 dark:to-purple-950/20 border-blue-200 dark:border-blue-800">
-        <div className="flex items-center justify-between">
-          <div>
-            <h2 className="text-2xl font-bold text-gray-900 dark:text-gray-100">
-              {excelData.sheetName}
-            </h2>
-            <p className="text-sm text-gray-600 dark:text-gray-400 mt-1">
-              Sheet 1 of {excelData.numOfSheets} • {excelData.data.length} rows
-            </p>
-          </div>
-          <div className="text-right">
-            <div className="text-3xl font-bold text-blue-600 dark:text-blue-400">
-              {excelData.data.length}
-            </div>
-            <div className="text-sm text-gray-500 dark:text-gray-400">Records</div>
-          </div>
-        </div>
-      </Card>
 
       {/* Search and Filters */}
       <Card className="p-4">
@@ -163,7 +144,7 @@ export const DataTable: React.FC<DataTableProps> = ({ excelData }) => {
                             }[header.column.getIsSorted() as string] ?? '↕'}
                           </span>
                         </button>
-                        
+
                         <Input
                           placeholder="Filter..."
                           value={(header.column.getFilterValue() as string) ?? ''}
@@ -178,11 +159,10 @@ export const DataTable: React.FC<DataTableProps> = ({ excelData }) => {
             </thead>
             <tbody className="bg-white dark:bg-gray-900 divide-y divide-gray-200 dark:divide-gray-700">
               {table.getRowModel().rows.map((row, index) => (
-                <tr 
+                <tr
                   key={row.id}
-                  className={`hover:bg-gray-50 dark:hover:bg-gray-800 transition-colors ${
-                    index % 2 === 0 ? 'bg-white dark:bg-gray-900' : 'bg-gray-25 dark:bg-gray-925'
-                  }`}
+                  className={`hover:bg-gray-50 dark:hover:bg-gray-800 transition-colors ${index % 2 === 0 ? 'bg-white dark:bg-gray-900' : 'bg-gray-25 dark:bg-gray-925'
+                    }`}
                 >
                   {row.getVisibleCells().map((cell) => (
                     <td
@@ -197,7 +177,7 @@ export const DataTable: React.FC<DataTableProps> = ({ excelData }) => {
             </tbody>
           </table>
         </div>
-        
+
         {table.getRowModel().rows.length === 0 && (
           <div className="text-center py-8 text-gray-500 dark:text-gray-400">
             No results found
