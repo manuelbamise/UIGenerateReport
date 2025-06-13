@@ -12,30 +12,18 @@ interface ExcelData {
 }
 
 const Index = () => {
-  const [selectedFile, setSelectedFile] = useState<File | null>(null);
   const [excelData, setExcelData] = useState<ExcelData | null>(null);
   const [loading, setLoading] = useState(false);
   const { toast } = useToast();
 
-  const handleFileChange = (e: React.ChangeEvent<HTMLInputElement>) => {
-    const file = e.target.files?.[0];
-    if (file) {
-      setSelectedFile(file);
-    }
-  };
-
-
-  const handleFileUpload = async () => {
-    if (!selectedFile) return;
+  const handleFileUpload = async (file: File) => {
     setLoading(true);
 
     try {
-
       const formData = new FormData();
-      formData.append('file', selectedFile);
+      formData.append('file', file);
 
-
-
+      // Replace with your actual API endpoint
       const response = await fetch('http://localhost:3000/api/upload', {
         method: 'POST',
         body: formData,
@@ -45,13 +33,13 @@ const Index = () => {
         throw new Error('Failed to upload file');
       }
 
-      const data = await response.json(); // this is your JSON structure
+      const data = await response.json();
       setExcelData(data);
       console.log('Received JSON:', data);
 
       toast({
         title: "Success!",
-        description: `Successfully loaded ${data.length} rows from ${selectedFile.name}`,
+        description: `Successfully loaded ${data.data?.length || 0} rows from ${file.name}`,
       });
 
     } catch (error) {
