@@ -10,41 +10,74 @@ import {useUploadExcel} from '../hooks/use-upload';
 interface ExcelData {
   sheetName: string;
   numOfSheets: number;
-  sheetData?: any[];
+  sheetData: Record<string, any>[];
 }
 
 const Index = () => {
-  // const [selectedFile, setSelectedFile] = useState(null);
   const [excelData, setExcelData] = useState<ExcelData | null>(null);
   const { toast } = useToast();
   const uploadMutation = useUploadExcel();
   const loading = uploadMutation.isPending;
 
-  const handleFileUpload = async (file: File) => {
+  // Helper function to transform array-of-arrays to array-of-objects
+  const transformSheetData = (rawData: any[][]): Record<string, any>[] => {
+    if (!rawData || rawData.length < 2) {
+      return [];
+    }
 
-    // Called on file select
+    const headers = rawData[0];
+    const dataRows = rawData.slice(1);
+
+    return dataRows.map((row) => {
+      const obj: Record<string, any> = {};
+      headers.forEach((header, index) => {
+        obj[header] = row[index] || '';
+      });
+      return obj;
+    });
+  };
+
+  const handleFileUpload = async (file: File) => {
     if (!file) {
       toast({
         title: "Upload a file first",
         description: "you have to upload a file before you continue",
         variant: "destructive"
       })
-
       return;
     }
 
-    // setSelectedFile(file);
     setExcelData(null); // Clear previous data
     console.log(file.name)
 
      uploadMutation.mutate(file, {
       onSuccess: (data) => {
-        console.log(data)
-        setExcelData(data);
-        toast({
-          title: 'Success!',
-          description: `Successfully loaded ${data.sheetData?.length || 0} rows from ${file.name}`,
-        });
+        console.log('Raw API response:', data);
+        
+        try {
+          // Transform the array-of-arrays data to array-of-objects
+          const transformedData = transformSheetData(data.sheetData);
+          console.log('Transformed data:', transformedData);
+          
+          const processedExcelData: ExcelData = {
+            sheetName: data.sheetName,
+            numOfSheets: data.numOfSheets,
+            sheetData: transformedData
+          };
+          
+          setExcelData(processedExcelData);
+          toast({
+            title: 'Success!',
+            description: `Successfully loaded ${transformedData.length} rows from ${file.name}`,
+          });
+        } catch (error) {
+          console.error('Error transforming data:', error);
+          toast({
+            title: 'Data processing error',
+            description: 'Failed to process the Excel data. Please check the file format.',
+            variant: 'destructive',
+          });
+        }
       },
       onError: (error: any) => {
         toast({
@@ -119,18 +152,17 @@ const Index = () => {
                       {excelData.sheetName}
                     </h2>
                     <p className="text-sm text-gray-600 dark:text-gray-400 mt-1">
-                      Sheet 1 of {excelData.numOfSheets} • {excelData.sheetData.length} rows
+                      Sheet 1 of {excelData.numOfSheets} • {excelData.sheetData?.length || 0} rows
                     </p>
                   </div>
                   <div className="text-right">
                     <div className="text-3xl font-bold text-blue-600 dark:text-blue-400">
-                      {excelData.sheetData.length}
+                      {excelData.sheetData?.length || 0}
                     </div>
                     <div className="text-sm text-gray-500 dark:text-gray-400">Records</div>
                   </div>
                 </div>
               </Card>
-
 
               <DataTable excelData={excelData} />
             </div>

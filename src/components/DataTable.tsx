@@ -24,28 +24,29 @@ interface DataTableProps {
   excelData: ExcelData;
 }
 
-
 export const DataTable: React.FC<DataTableProps> = ({ excelData }) => {
   const [sorting, setSorting] = useState<SortingState>([]);
   const [columnFilters, setColumnFilters] = useState<ColumnFiltersState>([]);
   const [globalFilter, setGlobalFilter] = useState('');
 
-
-const columnHelper = useMemo(()=> createColumnHelper<Record<string, any>>(),[]);
-    const tableData = excelData.sheetData.slice(1);
+  const columnHelper = useMemo(() => createColumnHelper<Record<string, any>>(), []);
 
   const columns = useMemo(() => {
-    if (!excelData.sheetData || excelData.sheetData.length < 2) return [];
+    if (!excelData?.sheetData || excelData.sheetData.length === 0) {
+      return [];
+    }
 
+    // Get column names from the first data object
+    const firstRow = excelData.sheetData[0];
+    if (!firstRow) return [];
 
-    const headerRow = excelData.sheetData[0];
-    return Object.keys(headerRow).map((key) =>
+    return Object.keys(firstRow).map((key) =>
       columnHelper.accessor(key, {
         header: key,
         cell: (info) => {
           const value = info.getValue();
+          console.log(key, value);
 
-          console.log(key,value)
           // Handle links
           if (typeof value === 'string' && value.startsWith('http')) {
             return (
@@ -71,10 +72,10 @@ const columnHelper = useMemo(()=> createColumnHelper<Record<string, any>>(),[]);
         },
       })
     );
-  }, [excelData.sheetData, columnHelper]);
+  }, [excelData?.sheetData, columnHelper]);
 
   const table = useReactTable({
-    data: tableData || [],
+    data: excelData?.sheetData || [],
     columns,
     state: {
       sorting,
@@ -89,7 +90,7 @@ const columnHelper = useMemo(()=> createColumnHelper<Record<string, any>>(),[]);
     getFilteredRowModel: getFilteredRowModel(),
   });
 
-  if (!excelData.sheetData || excelData.sheetData.length === 0) {
+  if (!excelData?.sheetData || excelData.sheetData.length === 0) {
     return (
       <Card className="p-8 text-center">
         <p className="text-gray-500 dark:text-gray-400">No data available</p>
@@ -99,7 +100,6 @@ const columnHelper = useMemo(()=> createColumnHelper<Record<string, any>>(),[]);
 
   return (
     <div className="space-y-6 animate-fade-in">
-
       {/* Search and Filters */}
       <Card className="p-4">
         <div className="flex flex-col sm:flex-row gap-4 mb-4">
@@ -166,8 +166,9 @@ const columnHelper = useMemo(()=> createColumnHelper<Record<string, any>>(),[]);
               {table.getRowModel().rows.map((row, index) => (
                 <tr
                   key={row.id}
-                  className={`hover:bg-gray-50 dark:hover:bg-gray-800 transition-colors ${index % 2 === 0 ? 'bg-white dark:bg-gray-900' : 'bg-gray-25 dark:bg-gray-925'
-                    }`}
+                  className={`hover:bg-gray-50 dark:hover:bg-gray-800 transition-colors ${
+                    index % 2 === 0 ? 'bg-white dark:bg-gray-900' : 'bg-gray-25 dark:bg-gray-925'
+                  }`}
                 >
                   {row.getVisibleCells().map((cell) => (
                     <td
