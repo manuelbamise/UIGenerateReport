@@ -5,6 +5,7 @@ import { ThemeToggle } from '../components/ThemeToggle';
 import { FileUpload } from '../components/FileUpload';
 import { DataTable } from '../components/DataTable';
 import { useToast } from '../hooks/use-toast';
+import {useUploadExcel} from '../hooks/use-upload';
 
 interface ExcelData {
   sheetName: string;
@@ -15,11 +16,11 @@ interface ExcelData {
 const Index = () => {
   // const [selectedFile, setSelectedFile] = useState(null);
   const [excelData, setExcelData] = useState<ExcelData | null>(null);
-  const [loading, setLoading] = useState(false);
   const { toast } = useToast();
+  const uploadMutation = useUploadExcel();
+  const loading = uploadMutation.isPending;
 
   const handleFileUpload = async (file: File) => {
-
 
     // Called on file select
     if (!file) {
@@ -36,45 +37,24 @@ const Index = () => {
     setExcelData(null); // Clear previous data
     console.log(file.name)
 
-    const formData = new FormData();
-    formData.append('file', file);
-
-    setLoading(true);
-
-    try {
-      const response = await fetch('http://localhost:5600/upload', {
-        method: 'POST',
-        body: formData,
-      });
-
-      if (!response.ok) {
-        throw new Error('Upload failed');
-      }
-
-      const responseJson = await response.json();
-      if (!responseJson) {
-        throw new Error('Error getting a response')
-      }
-      setExcelData(responseJson)
-
-      console.log('json Data:', responseJson);
-
-      toast({
-        title: "Success!",
-        description: `Successfully loaded ${responseJson.data?.length || 0} rows from ${file.name}`,
-      });
-
-    } catch (error) {
-      console.error('Error uploading file:', error);
-      toast({
-        title: `${error.message}`,
-        description: "Failed to process the file. Please try again.",
-        variant: "destructive",
-      });
-    } finally {
-      setLoading(false);
-    }
-  };
+     uploadMutation.mutate(file, {
+      onSuccess: (data) => {
+        console.log(data)
+        setExcelData(data);
+        toast({
+          title: 'Success!',
+          description: `Successfully loaded ${data.data?.length || 0} rows from ${file.name}`,
+        });
+      },
+      onError: (error: any) => {
+        toast({
+          title: error.message || 'Upload failed',
+          description: 'Failed to process the file. Please try again.',
+          variant: 'destructive',
+        });
+      },
+    });
+ };
 
   return (
     <div className="min-h-screen bg-gradient-to-br from-gray-50 to-blue-50 dark:from-gray-900 dark:to-blue-950 transition-all duration-500">
