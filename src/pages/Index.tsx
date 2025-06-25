@@ -10,7 +10,7 @@ import {useUploadExcel} from '../hooks/use-upload';
 interface ExcelData {
   sheetName: string;
   numOfSheets: number;
-  data?: any[];
+  sheetData?: any[];
 }
 
 const Index = () => {
@@ -43,7 +43,7 @@ const Index = () => {
         setExcelData(data);
         toast({
           title: 'Success!',
-          description: `Successfully loaded ${data.data?.length || 0} rows from ${file.name}`,
+          description: `Successfully loaded ${data.sheetData?.length || 0} rows from ${file.name}`,
         });
       },
       onError: (error: any) => {
@@ -119,12 +119,12 @@ const Index = () => {
                       {excelData.sheetName}
                     </h2>
                     <p className="text-sm text-gray-600 dark:text-gray-400 mt-1">
-                      Sheet 1 of {excelData.numOfSheets} • {excelData.data.length} rows
+                      Sheet 1 of {excelData.numOfSheets} • {excelData.sheetData.length} rows
                     </p>
                   </div>
                   <div className="text-right">
                     <div className="text-3xl font-bold text-blue-600 dark:text-blue-400">
-                      {excelData.data.length}
+                      {excelData.sheetData.length}
                     </div>
                     <div className="text-sm text-gray-500 dark:text-gray-400">Records</div>
                   </div>

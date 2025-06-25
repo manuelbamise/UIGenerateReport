@@ -17,30 +17,35 @@ import { Button } from '@/components/ui/button';
 interface ExcelData {
   sheetName: string;
   numOfSheets: number;
-  data: Record<string, any>[];
+  sheetData: Record<string, any>[];
 }
 
 interface DataTableProps {
   excelData: ExcelData;
 }
 
+
 export const DataTable: React.FC<DataTableProps> = ({ excelData }) => {
   const [sorting, setSorting] = useState<SortingState>([]);
   const [columnFilters, setColumnFilters] = useState<ColumnFiltersState>([]);
   const [globalFilter, setGlobalFilter] = useState('');
 
-  const columnHelper = createColumnHelper<Record<string, any>>();
+
+const columnHelper = useMemo(()=> createColumnHelper<Record<string, any>>(),[]);
+    const tableData = excelData.sheetData.slice(1);
 
   const columns = useMemo(() => {
-    if (!excelData.data || excelData.data.length === 0) return [];
+    if (!excelData.sheetData || excelData.sheetData.length < 2) return [];
 
-    const firstRow = excelData.data[0];
-    return Object.keys(firstRow).map((key) =>
+
+    const headerRow = excelData.sheetData[0];
+    return Object.keys(headerRow).map((key) =>
       columnHelper.accessor(key, {
         header: key,
         cell: (info) => {
           const value = info.getValue();
 
+          console.log(key,value)
           // Handle links
           if (typeof value === 'string' && value.startsWith('http')) {
             return (
@@ -66,10 +71,10 @@ export const DataTable: React.FC<DataTableProps> = ({ excelData }) => {
         },
       })
     );
-  }, [excelData.data, columnHelper]);
+  }, [excelData.sheetData, columnHelper]);
 
   const table = useReactTable({
-    data: excelData.data || [],
+    data: tableData || [],
     columns,
     state: {
       sorting,
@@ -84,7 +89,7 @@ export const DataTable: React.FC<DataTableProps> = ({ excelData }) => {
     getFilteredRowModel: getFilteredRowModel(),
   });
 
-  if (!excelData.data || excelData.data.length === 0) {
+  if (!excelData.sheetData || excelData.sheetData.length === 0) {
     return (
       <Card className="p-8 text-center">
         <p className="text-gray-500 dark:text-gray-400">No data available</p>
